@@ -269,7 +269,7 @@ sigma.classes.EventDispatcher = function() {
                         break;
                     case "fixed":
                     case "active":
-                    case "hidden":
+                        //case "hidden":
                     case "forceLabel":
                         a[c] = !!d[c];
                         break;
@@ -350,6 +350,7 @@ sigma.classes.EventDispatcher = function() {
                     a.displayY - a.displaySize)
             })
         };
+
         this.checkHover = function(a, b) {
             var d, f, j, h = [],
                 g = [];

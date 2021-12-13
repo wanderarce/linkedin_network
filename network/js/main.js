@@ -506,13 +506,13 @@ function nodeActive(a) {
         if (a == b.source) outgoing[b.target] = n; //SAH
         else if (a == b.target) incoming[b.source] = n; //SAH
         if (a == b.source || a == b.target) sigInst.neighbors[a == b.target ? b.source : b.target] = n;
-        b.hidden = !1, b.attr.color = "rgba(255, 0, 0, 1)";
+        b.hidden = !1, b.attr.color = "rgba(0, 0, 0, 1)";
     });
     var f = [];
     sigInst.iterNodes(function(a) {
-        a.hidden = !0;
-        a.attr.lineWidth = !1;
-        a.attr.color = a.color
+        //a.hidden = !0;
+        //a.attr.lineWidth = !1;
+        //a.attr.color = "#333"; //a.color
     });
 
     if (groupByDirection) {
@@ -615,7 +615,6 @@ function nodeActive(a) {
         var a = $(this),
             b = a.attr("rel");
     });
-    debugger
     f = b.attr;
     if (f.attributes) {
         var image_attribute = false;
@@ -634,7 +633,6 @@ function nodeActive(a) {
             //temp_array.push(f.attributes[g].attr);
             e.push(h)
         }
-        debugger
         if (image_attribute) {
             //image_index = jQuery.inArray(image_attribute, temp_array);
             $GP.info_name.html("<div><img src=" + f.attributes[image_attribute] + " style=\"vertical-align:middle\" /> <span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
@@ -680,11 +678,12 @@ function showCluster(a) {
             a.attr.color = !1
         });
         sigInst.iterNodes(function(a) {
-            a.hidden = !0
+            a.hidden = !1
         });
         for (var f = [], e = [], c = 0, g = b.length; c < g; c++) {
             var d = sigInst._core.graph.nodesIndex[b[c]];
-            !0 == d.hidden && (e.push(b[c]), d.hidden = !1, d.attr.lineWidth = !1, d.attr.color = d.color, f.push('<li class="membership"><a href="#' + d.label - a + '" onmouseover="sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex[\'' + d.id + "'])\" onclick=\"nodeActive('" + d.id + '\')" onmouseout="sigInst.refresh()">' + d.label + "</a></li>"))
+            //!0 == d.hidden &&
+            (e.push(b[c]), d.hidden = !1, d.attr.lineWidth = !1, d.attr.color = d.color, f.push('<li class="membership"><a href="#' + d.label - a + '" onmouseover="sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex[\'' + d.id + "'])\" onclick=\"nodeActive('" + d.id + '\')" onmouseout="sigInst.refresh()">' + d.label + "</a></li>"))
         }
         sigInst.clusters[a] = e;
         sigInst.draw(2, 2, 2, 2);
