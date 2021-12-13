@@ -615,6 +615,7 @@ function nodeActive(a) {
         var a = $(this),
             b = a.attr("rel");
     });
+    debugger
     f = b.attr;
     if (f.attributes) {
         var image_attribute = false;
@@ -633,12 +634,27 @@ function nodeActive(a) {
             //temp_array.push(f.attributes[g].attr);
             e.push(h)
         }
-
+        debugger
         if (image_attribute) {
             //image_index = jQuery.inArray(image_attribute, temp_array);
             $GP.info_name.html("<div><img src=" + f.attributes[image_attribute] + " style=\"vertical-align:middle\" /> <span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
         } else {
-            $GP.info_name.html("<div><span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
+
+            var item = "<div>";
+            item += "<span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span>";
+            if (f.company != undefined && f.company != null && f.company != '') {
+                item += "<br/> <span>Company: " + f.company + "</span> ";
+            }
+            if (f.office != undefined && f.office != null && f.office != '') {
+                item += "<br/> <span>Office: " + f.office + "</span> ";
+            }
+            if (f.url != undefined && f.url != null && f.url != '') {
+                item += "<br/> <span><a href='" + b.url + "'>LinkedIn</span> ";
+            }
+            item += "</div>";
+
+            $GP.info_name.html(item);
+
         }
         // Image field for attribute pane
         $GP.info_data.html(e.join("<br/>"))
