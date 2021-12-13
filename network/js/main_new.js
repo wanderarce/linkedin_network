@@ -96,7 +96,7 @@ function initSigma(config) {
             function(b) { //This is where we populate the array used for the group select box
 
                 // note: index may not be consistent for all nodes. Should calculate each time. 
-                // alert(JSON.stringify(b.attr.attributes[5].val));
+                //alert(JSON.stringify(b.attr.company));
                 // alert(b.x);
                 a.clusters[b.attr.company] || (a.clusters[b.attr.company] = []);
                 a.clusters[b.attr.company].push(b.id); //SAH: push id not label
@@ -191,6 +191,7 @@ function setupGUI(config) {
     $GP.info_close2.click(nodeNormal);
     $GP.form = $("#mainpanel").find("form");
     $GP.search = new Search($GP.form.find("#search"));
+
     if (!config.features.search) {
         $("#search").hide();
     }
@@ -208,7 +209,7 @@ function configSigmaElements(config) {
     // Node hover behaviour
     if (config.features.hoverBehavior == "dim") {
 
-        var greyColor = '#ccc';
+        var greyColor = '#333';
         sigInst.bind('overnodes', function(event) {
             var nodes = event.content;
             var neighbors = {};
@@ -237,8 +238,12 @@ function configSigmaElements(config) {
                     n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
                     n.attr['grey'] = 0;
                 }
+
             }).draw(2, 2, 2);
-        }).bind('outnodes', function() {
+        }).bind('outnodes', function(event) {
+            var nodes = event.content;
+            var neighbors = {};
+
             sigInst.iterEdges(function(e) {
                 e.color = e.attr['grey'] ? e.attr['true_color'] : e.color;
                 e.attr['grey'] = 0;
@@ -246,6 +251,8 @@ function configSigmaElements(config) {
                 n.color = n.attr['grey'] ? n.attr['true_color'] : n.color;
                 n.attr['grey'] = 0;
             }).draw(2, 2, 2);
+
+
         });
 
     } else if (config.features.hoverBehavior == "hide") {
@@ -278,7 +285,9 @@ function configSigmaElements(config) {
     $GP.bg2 = $(sigInst._core.domElements.bg2);
     var a = [],
         b, x = 1;
-    for (b in sigInst.clusters) a.push('<div style="line-height:12px"><a href="#' + b + '"><div style="width:40px;height:12px;border:1px solid #fff;background:' + b + ';display:inline-block"></div>  ' + b + ' (' + sigInst.clusters[b].length + ' members)</a></div>');
+    for (b in sigInst.clusters) {
+        a.push('<div style="line-height:12px"><a href="#' + b + '"> ' + b + ' (' + sigInst.clusters[b].length + ' members)</a></div>');
+    }
     //a.sort();
     $GP.cluster.content(a.join(""));
     b = {
@@ -330,6 +339,7 @@ function configSigmaElements(config) {
 
 function Search(a) {
     this.input = a.find("input[name=search]");
+    this.inputCompany = a.find("input[name=company]");
     this.inputOffice = a.find("input[name=office]");
 
     this.state = a.find(".state");
@@ -345,14 +355,17 @@ function Search(a) {
     });
     this.input.keydown(function(a) {
         if (13 == a.which) return b.state.addClass("searching"), b.search(b.input.val(),
-            b.inputOffice.val()), !1
+            b.inputCompany.val(), b.inputOffice.val()), !1
+    });
+    this.inputCompany.keydown(function(a) {
+        if (13 == a.which) return b.state.addClass("searching"), b.search(b.input.val(), b.inputCompany.val(), b.inputOffice.val()), !1
     });
     this.inputOffice.keydown(function(a) {
-        if (13 == a.which) return b.state.addClass("searching"), b.search(b.input.val(), b.inputOffice.val()), !1
+        if (13 == a.which) return b.state.addClass("searching"), b.search(b.input.val(), b.inputCompany.val(), b.inputOffice.val()), !1
     });
     this.state.click(function() {
         var a = b.input.val();
-        var a2 = b.inputOffice.val();
+        var a2 = b.inputCompany.val();
         b.searching && a == b.lastSearch ? b.close() : (b.state.addClass("searching"), b.search(a, a2))
     });
     this.dom = a;
@@ -368,12 +381,14 @@ function Search(a) {
         this.state.removeClass("searching");
         this.input.val("");
     };
-    this.search = function(inputName, inputOffice) {
+    this.search = function(inputName, inputCompany, inputOffice) {
         var b = !1,
             c = [],
             b = this.exactMatch ? ("^" + inputName + "$").toLowerCase() : inputName.toLowerCase(),
+            b2 = this.exactMatch ? ("^" + inputCompany + "$").toLowerCase() : inputCompany.toLowerCase(),
             b3 = this.exactMatch ? ("^" + inputOffice + "$").toLowerCase() : inputOffice.toLowerCase(),
             g = RegExp(b),
+            g2 = RegExp(b2),
             g3 = RegExp(b3);
 
 
@@ -385,19 +400,41 @@ function Search(a) {
         //else {
         sigInst.iterNodes(function(data) {
             var test = inputName != undefined && inputName != '';
+            var testCompany = inputCompany != undefined && inputCompany != '';
             var testOffice = inputOffice != undefined && inputOffice != '';
             var insere = false;
-            if (test && testOffice) {
+            if (test && testCompany && testOffice) {
+                if ((data.attr.company != undefined && g2.test(data.attr.company.toLowerCase())) &&
+                    (data.attr.office != undefined && g3.test(data.attr.office.toLowerCase())) &&
+                    (g.test(data.label.toLowerCase()))) {
+                    insere = true;
+
+                }
+            } else if (test && testCompany) {
+                if ((data.attr.company != undefined && g2.test(data.attr.company.toLowerCase())) &&
+                    (g.test(data.label.toLowerCase()))) {
+                    insere = true;
+                }
+            } else if (test && testOffice) {
                 if ((data.attr.office != undefined && g3.test(data.attr.office.toLowerCase())) &&
                     (g.test(data.label.toLowerCase()))) {
+                    insere = true;
+                }
+            } else if (testOffice && testCompany) {
+                if ((data.attr.company != undefined && g2.test(data.attr.company.toLowerCase())) &&
+                    (data.attr.office != undefined && g3.test(data.attr.office.toLowerCase()))) {
                     insere = true;
                 }
             } else if (test) {
                 if (g.test(data.label.toLowerCase())) {
                     insere = true;
                 }
-            } else {
+            } else if (testOffice) {
                 if ((data.attr.office != undefined && g3.test(data.attr.office.toLowerCase()))) {
+                    insere = true;
+                }
+            } else {
+                if (data.attr.company != undefined && g2.test(data.attr.company.toLowerCase())) {
                     insere = true;
                 }
             }
@@ -451,6 +488,7 @@ function Cluster(a) {
         this.list.html(a);
         this.list.find("a").click(function() {
             var a = $(this).attr("href").substr(1);
+            console.log("a: " + a);
             showCluster(a)
         })
     };
@@ -497,22 +535,23 @@ function nodeActive(a) {
     sigInst.iterEdges(function(b) {
         b.attr.lineWidth = !1;
         b.hidden = !0;
+
         n = {
             name: b.label,
             colour: b.color,
-            size: b.size
+            company: b.company
         };
 
         if (a == b.source) outgoing[b.target] = n; //SAH
         else if (a == b.target) incoming[b.source] = n; //SAH
         if (a == b.source || a == b.target) sigInst.neighbors[a == b.target ? b.source : b.target] = n;
-        b.hidden = !1, b.attr.color = "rgba(255, 0, 0, 1)";
+        b.hidden = 1, b.attr.color = "rgba(0, 0, 0, 1)";
     });
     var f = [];
     sigInst.iterNodes(function(a) {
-        a.hidden = !0;
-        a.attr.lineWidth = !1;
-        a.attr.color = a.color
+        //a.hidden = !0;
+        // a.attr.lineWidth = !1;
+        //a.attr.color = "#ccc"
     });
 
     if (groupByDirection) {
@@ -532,13 +571,12 @@ function nodeActive(a) {
         var e = [],
             //c = sigInst.neighbors,
             g;
-
         for (g in c) {
             var d = sigInst._core.graph.nodesIndex[g];
             d.hidden = !1;
             d.attr.lineWidth = !1;
             d.attr.color = c[g].colour;
-            //console.log();
+
             a != g && e.push({
                 id: g,
                 name: d.label,
@@ -546,9 +584,9 @@ function nodeActive(a) {
                 colour: c[g].colour,
                 company: d.attr.company,
                 office: d.attr.office,
-                size: sigInst.neighbors[g].size
+                size: d.size
 
-            })
+            });
         }
         e.sort(function(a, b) {
             var c = a.size,
@@ -556,33 +594,47 @@ function nodeActive(a) {
             return c != d ? (c < d ? (1) : (c > d ? -1 : 0)) : 0;
         });
 
+        // e.sort(function(a, b) {
+        //     var c = a.group.toLowerCase(),
+        //         d = b.group.toLowerCase(),
+        //         e = a.name.toLowerCase(),
+        //         f = b.name.toLowerCase();
+        //     return c != d ? c < d ? -1 : c > d ? 1 : 0 : e < f ? -1 : e > f ? 1 : 0
+        // });
         d = "";
         for (g in e) {
             c = e[g];
-            //if (c.group != d) {
-            d = c.size;
-            f.push('<li class="cf" rel="' + c.color + '"><div class=""></div><div class="">' + d + "</div></li>");
-            //}
-            var item = '<li class="membership"><a href="#' + c.name + '" onmouseover="sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex[\'' + c.id + '\'])\" onclick=\"nodeActive(\'' + c.id + '\')" onmouseout="sigInst.refresh()">' + c.name;
+            if (c.group != d) {
+                d = c.size;
+                f.push('<li class="cf" rel="' + c.color + '"><div class=""></div><div class="">' + d + "</div></li>");
+            }
+            // if (c.company != undefined && c.company != null) {
+            //     f.push('<li class="cf"><a href="#' + c.company + '" onmouseover="sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex[\'' + c.id + '\'])\" onclick=\"nodeActive(\'' + c.id + '\')" onmouseout="sigInst.refresh()">' + c.company + "</a></li>");
+            // }
+            var item = '<li class="membership"><a href="#' + c.name;
+            //item += '" onmouseover="sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex[\'' + c.id + '\'])\"';
+            item += '" onclick=\"nodeActive(\'' + c.id + '\')"';
+            //item += '" onmouseout="sigInst.refresh()" ';
+            item += '">';
+            item += c.name;
             if (c.company != undefined && c.company != "") {
                 item += " - " + c.company;
             }
             if (c.office != undefined && c.office != "") {
                 item += " - " + c.office;
             }
-
-            item += "</a></li>";
+            item += "</a></li>"
             f.push(item);
         }
         return f;
     }
 
-    /*console.log("mutual:");
-    console.log(mutual);
-    console.log("incoming:");
-    console.log(incoming);
-    console.log("outgoing:");
-    console.log(outgoing);*/
+    // console.log("mutual:");
+    // console.log(mutual);
+    // console.log("incoming:");
+    // console.log(incoming);
+    // console.log("outgoing:");
+    // console.log(outgoing);
 
 
     var f = [];
@@ -636,9 +688,16 @@ function nodeActive(a) {
 
         if (image_attribute) {
             //image_index = jQuery.inArray(image_attribute, temp_array);
-            $GP.info_name.html("<div><img src=" + f.attributes[image_attribute] + " style=\"vertical-align:middle\" /> <span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
+            var html = "<div><img src=" + f.attributes[image_attribute] + " style=\"vertical-align:middle; margin-right: 2px;\" />";
+            //html += "<span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()"';
+            html += b.label + "</div>";
+            $GP.info_name.html(html);
         } else {
-            $GP.info_name.html("<div><span onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])" onmouseout="sigInst.refresh()">' + b.label + "</span></div>");
+            var html = "<div><span ";
+            //html += " onmouseover=\"sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex['" + b.id + '\'])"';
+            //html += '" onmouseout="sigInst.refresh()" ';
+            html += '">' + b.label + " - " + b.company == undefined ? "" : b.company + "</span></div>";
+            $GP.info_name.html(html);
         }
         // Image field for attribute pane
         $GP.info_data.html(e.join("<br/>"))
@@ -653,6 +712,7 @@ function nodeActive(a) {
 }
 
 function showCluster(a) {
+
     var b = sigInst.clusters[a];
     if (b && 0 < b.length) {
         showGroups(!1);
@@ -664,11 +724,25 @@ function showCluster(a) {
             a.attr.color = !1
         });
         sigInst.iterNodes(function(a) {
-            a.hidden = !0
+            ///a.hidden = !0;
+
+            a.attr.color = "#333"
         });
         for (var f = [], e = [], c = 0, g = b.length; c < g; c++) {
             var d = sigInst._core.graph.nodesIndex[b[c]];
-            !0 == d.hidden && (e.push(b[c]), d.hidden = !1, d.attr.lineWidth = !1, d.attr.color = d.color, f.push('<li class="membership"><a href="#' + d.label + '" onmouseover="sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex[\'' + d.id + "'])\" onclick=\"nodeActive('" + d.id + '\')" onmouseout="sigInst.refresh()">' + d.label + "</a></li>"))
+            //!0 == d.hidden &&
+            var item = '<li class="membership"><a href="#' + d.label;
+            //item += '" onmouseover="sigInst._core.plotter.drawHoverNode(sigInst._core.graph.nodesIndex[\'' + d.id + "'])\"';
+            item += "\" onclick=\"nodeActive('" + d.id + '\')" >';
+            //item += '" onmouseout="sigInst.refresh()">';
+            item += d.label + " - " + a + "</a></li>";
+            (
+                e.push(b[c]),
+                d.hidden = !1,
+                d.attr.lineWidth = !1,
+                d.attr.color = "#333",
+                f.push(item)
+            )
         }
         sigInst.clusters[a] = e;
         sigInst.draw(2, 2, 2, 2);
